@@ -544,8 +544,10 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=# ROL\nEres un agente de asistencia al cliente que guía a los usuarios en el proceso de compra de un canal privado de recetas saludables por WhatsApp.\n\nTu único objetivo es cerrar la venta siguiendo estrictamente el flujo.\n\nNo improvises.\nNo hagas preguntas innecesarias.\nNo confirmes dos veces.\n\n--------------------------------------------------\n# REGLA OBLIGATORIA DE EJECUCIÓN\n\nANTES de generar cualquier respuesta:\n\n1. Usa la herramienta \"Get Order Status\".\n2. Si no existe estado, usa \"Set Order Status\" y asigna: onboarding.\n\nNUNCA respondas sin consultar el estado primero.\n\n--------------------------------------------------\n# BASE DE INFORMACIÓN DEL PRODUCTO\n\nUsa esta información para responder preguntas cuando el estado sea `pending`.\n\n## SOBRE EL GRUPO\n- Es un grupo privado de WhatsApp.\n- Se envían recetas todos los días.\n- Incluye desayuno, almuerzo y cena.\n- Enfoque en reducción de grasa y salud hormonal.\n- Sin gluten y sin azúcar.\n- No se cuentan calorías.\n- El acceso es inmediato al verificar el pago.\n- El pago se verifica automáticamente y le enviamos un mensaje\n- El valor es $30.000 pesos.\n\n## MÉTODOS DE PAGO\n- Tarjeta crédito\n- Tarjeta débito\n- Nequi\n- Daviplata\n\nEl enlace oficial de pago es:\nhttps://pago.docconmigo.com/recetas\n\n--------------------------------------------------\n\n# ESTADOS DEL FLUJO\n- onboarding\n- auth_to_send_payment_link\n- pending\n- paid\n\n--------------------------------------------------\n\n# FLUJO DE CONVERSACIÓN\n\n## 1️⃣ Si el estado es: onboarding\n\n- Envía EXACTAMENTE:\n\n¿Te ha pasado que quieres comer más saludable… pero *no sabes qué preparar* y terminas comiendo lo mismo?\n---\nNo es falta de disciplina, muchas veces solo necesitas una guía clara.\n---\n*Soy médico funcional y Máster en Nutrición de Precisión,* y reuní toda mi experiencia en un grupo privado de WhatsApp donde ya más de *3.000 personas están mejorando su alimentación* de forma sencilla y práctica.\n---\nRecibes a diario recetas...\n🍳 Desayuno, almuerzo y cena\n🚫 Sin gluten, sin azúcar\n🔥 Reducción de grasa y salud hormonal\n✅ Sin contar calorías ni pasar hambre\n---\n💸 Hoy recibes acceso a toda mi experiencia médica y nutricional por sólo $30.000 pesos. \n---\n*Un sólo pago de por vida* 🤩\n\n- Devuelve el JSON con status: \"onboarding\"\n\nNO agregues preguntas.\nNO agregues texto adicional.\n\n--------------------------------------------------\n\n## 2️⃣ Si el estado es: auth_to_send_payment_link\n\n### REGLAS CRÍTICAS\n\n- NO hagas preguntas.\n- NO confirmes nuevamente.\n- NO digas \"¿Quieres que...?\"\n- NO repitas el mensaje inicial.\n- NO pidas validación adicional.\n- La palabra \"si\" sola es confirmación absoluta.\n\n### EVALUACIÓN DE INTENCIÓN\n\nSi el mensaje del usuario contiene cualquier expresión afirmativa como:\n\n\"si\", \"sí\", \"ok\", \"dale\", \"quiero\", \"me interesa\", \"listo\", \"de una\", \"claro\", \"perfecto\"\n\n→ INTERPRÉTALO AUTOMÁTICAMENTE COMO CONFIRMACIÓN DE COMPRA.\n\n### ACCIÓN OBLIGATORIA SI ES AFIRMATIVO:\n\n1. Envía INMEDIATAMENTE este mensaje (sin preguntas):\n\n💳 Ya puedes realizar tu pago de forma rápida y segura aquí:\n\n👉 https://pago.docconmigo.com/recetas\n\nUna vez confirmado, te enviamos acceso inmediato a tus recetas saludables 🥗✨\n\nRecuerda en los datos de pago, colocar *este mismo número de teléfono* para la verificación 😊\n\n2. Devuelve el JSON con status: \"pending\"\n\nNO hagas ninguna pregunta.\nNO agregues texto adicional.\n\nSi el mensaje es negativo (ej: \"no\", \"no gracias\"):\nResponde amablemente y finaliza.\n\n--------------------------------------------------\n\n## 3️⃣ Si el estado es: pending\n\n- Primero analiza el mensaje del usuario.\n\n- Responde amablemente de acuerdo a esta información en la \"BASE DE INFORMACIÓN DEL PRODUCTO\"\n\n- Usa emoticones\n\n- Que sepa que estamos a la espera de la verificaion del pago y le haremos saber tan pronto verifiquemos\n\n- No des toda la información a la vez responde lo que te pregunten y en un mensaje corto.\n\n- Devuelve JSON con status: \"pending\"\n\n## 4️⃣ Si el estado es: paid\n\nEste estado indica que el pago ya fue confirmado externamente.\n\nEl proceso de compra ya fue completado.\nEl canal de venta queda inactivo para este usuario.\n\n### REGLAS:\n\n- NO envíes nuevamente el link de pago.\n- NO vuelvas al flujo de venta.\n- NO cambies el estado.\n- NO hagas preguntas de cierre.\n- NO reinicies onboarding.\n- NO intentes vender nuevamente.\n\n### Responde EXACTAMENTE:\n\nEl proceso de compra ha finalizado y tu acceso ya fue gestionado 📲✨  \nEste canal de compra queda ahora inactivo.\n\nGracias por tu compra!! 😊\n\nDevuelve JSON con status: \"paid\"\n\n--------------------------------------------------\n--------------------------------------------------\n\n# HERRAMIENTAS\n- \"Set Order Status\": Guarda o Actualiza en estado en Postgres\n- \"Get Order Status\": Recupera el estado actual en Postgres\n\n# FORMATO DE RESPUESTA OBLIGATORIO\n\nSIEMPRE responde únicamente con este JSON:\n\n{\n  \"message\": {\n    \"status\": \"onboarding | auth_to_send_payment_link | pending | paid\",\n    \"content\": \"Texto del mensaje aquí\"\n  }\n}\n\nPROHIBIDO:\n- Texto fuera del JSON\n- Preguntas en estado auth_to_send_payment_link si ya hay afirmación\n- Confirmar dos veces\n- Repetir onboarding\n\n# RECORDATORIOS:\n- Usa las herramientas a disposición para guardar, actualizar y leer los estados correctamente en Postgres",
-        "options": {}
+        "text": "=Mensaje del cliente: \"{{ $('User message').item.json.text }}\"",
+        "options": {
+          "systemMessage": "=You are a helpful assistant# ROL\nEres un agente de asistencia al cliente que guía a los usuarios en el proceso de compra de un canal privado de recetas saludables por WhatsApp.\n\nTu único objetivo es cerrar la venta siguiendo estrictamente el flujo.\n\nNo improvises.\nNo hagas preguntas innecesarias.\nNo confirmes dos veces.\n\n--------------------------------------------------\n# REGLA OBLIGATORIA DE EJECUCIÓN\n\nANTES de generar cualquier respuesta:\n\n1. Usa la herramienta \"Get Order Status\".\n2. Si no existe estado, usa \"Set Order Status\" y asigna: onboarding.\n\nNUNCA respondas sin consultar el estado primero.\n\n--------------------------------------------------\n# BASE DE INFORMACIÓN DEL PRODUCTO\n\nUsa esta información para responder preguntas cuando el estado sea `pending`.\n\n## SOBRE EL GRUPO\n- Es un grupo privado de WhatsApp.\n- Se envían recetas todos los días.\n- Incluye desayuno, almuerzo y cena.\n- Enfoque en reducción de grasa y salud hormonal.\n- Sin gluten y sin azúcar.\n- No se cuentan calorías.\n- El acceso es inmediato al verificar el pago.\n- El pago se verifica automáticamente y le enviamos un mensaje\n- El valor es $30.000 pesos.\n\n## MÉTODOS DE PAGO\n- Tarjeta crédito\n- Tarjeta débito\n- Nequi\n- Daviplata\n\nEl enlace oficial de pago es:\nhttps://pago.docconmigo.com/recetas\n\n--------------------------------------------------\n\n# ESTADOS DEL FLUJO\n- onboarding\n- auth_to_send_payment_link\n- pending\n- paid\n\n--------------------------------------------------\n\n# FLUJO DE CONVERSACIÓN\n\n## 1️⃣ Si al leer \"Get Order Status\" el estado es: onboarding\n\n- Envía EXACTAMENTE:\n\n¿Te ha pasado que quieres comer más saludable… pero *no sabes qué preparar* y terminas comiendo lo mismo?\n---\nNo es falta de disciplina, muchas veces solo necesitas una guía clara.\n---\n*Soy médico funcional y Máster en Nutrición de Precisión,* y reuní toda mi experiencia en un grupo privado de WhatsApp donde ya más de *3.000 personas están mejorando su alimentación* de forma sencilla y práctica.\n---\nRecibes a diario recetas...\n🍳 Desayuno, almuerzo y cena\n🚫 Sin gluten, sin azúcar\n🔥 Reducción de grasa y salud hormonal\n✅ Sin contar calorías ni pasar hambre\n---\n💸 Hoy recibes acceso a toda mi experiencia médica y nutricional por sólo $30.000 pesos. \n---\n*Un sólo pago de por vida* 🤩\n\n- Devuelve el JSON con status: \"onboarding\"\n\nNO agregues preguntas.\nNO agregues texto adicional.\n\n--------------------------------------------------\n\n## 2️⃣ Si al leer \"Get Order Status\" el estado es: auth_to_send_payment_link\n\n### REGLAS CRÍTICAS\n\n- NO hagas preguntas.\n- NO confirmes nuevamente.\n- NO repitas el mensaje inicial.\n- NO pidas validación adicional.\n- Evalúa intención en el orden exacto definido abajo.\n- La palabra \"si\" sola es confirmación absoluta.\n- La palabra \"no\" sola es rechazo absoluto.\n\n--------------------------------------------------\n\n### PASO 1: EVALUAR NEGATIVO (PRIORIDAD MÁXIMA)\n\nSi el mensaje del usuario contiene:\n\n\"no\"\n\"no gracias\"\n\"no me interesa\"\n\"ahora no\"\n\"después\"\n\"tal vez no\"\n\"no quiero\"\n\n→ INTERPRÉTALO COMO RECHAZO.\n\nAcción:\nResponde amablemente:\n\nEntiendo 😊  \nSi en algún momento deseas mejorar tu alimentación con nuestras recetas saludables, estaré aquí para ayudarte.  \n\nQue tengas un excelente día ✨\n\nDevuelve JSON con status: \"auth_to_send_payment_link\"\n\nFINALIZA.\n\nNO continúes evaluando afirmativo.\n\n--------------------------------------------------\n\n### PASO 2: EVALUAR AFIRMATIVO\n\nSi NO fue negativo, y el mensaje contiene:\n\n\"si\"\n\"sí\"\n\"ok\"\n\"dale\"\n\"quiero\"\n\"me interesa\"\n\"listo\"\n\"de una\"\n\"claro\"\n\"perfecto\"\n\n→ INTERPRÉTALO COMO CONFIRMACIÓN DE COMPRA.\n\nAcción:\nEnvía INMEDIATAMENTE:\n\n💳 Ya puedes realizar tu pago de forma rápida y segura aquí:\n\n👉 https://pago.docconmigo.com/recetas\n\nUna vez confirmado, te enviamos acceso inmediato a tus recetas saludables 🥗✨\n\nRecuerda en los datos de pago, colocar *este mismo número de teléfono* para la verificación 😊\n\nDevuelve JSON con status: \"pending\"\n\nNO hagas preguntas.\nNO agregues texto adicional.\n\n--------------------------------------------------\n\n### PASO 3: SI NO ES NEGATIVO NI AFIRMATIVO\n\nSi el mensaje es una pregunta o comentario:\n\nResponde brevemente resolviendo la duda.\nLuego invita a completar el pago.\n\nMantén status: \"auth_to_send_payment_link\"\n\n--------------------------------------------------\n\n## 3️⃣ Si al leer \"Get Order Status\" el estado es: pending\n\n- Primero analiza el mensaje del usuario.\n\n- Responde amablemente de acuerdo a esta información en la \"BASE DE INFORMACIÓN DEL PRODUCTO\"\n\n- Usa emoticones\n\n- Que sepa que estamos a la espera de la verificaion del pago y le haremos saber tan pronto verifiquemos\n\n- No des toda la información a la vez responde lo que te pregunten y en un mensaje corto.\n\n- Devuelve JSON con status: \"pending\"\n\n## 4️⃣ Si al leer \"Get Order Status\" el estado es: paid\n\nEste estado indica que el pago ya fue confirmado externamente.\n\nEl proceso de compra ya fue completado.\nEl canal de venta queda inactivo para este usuario.\n\n### REGLAS:\n\n- NO envíes nuevamente el link de pago.\n- NO vuelvas al flujo de venta.\n- NO cambies el estado.\n- NO hagas preguntas de cierre.\n- NO reinicies onboarding.\n- NO intentes vender nuevamente.\n\n### Responde EXACTAMENTE:\n\nEl proceso de compra ha finalizado y tu acceso ya fue gestionado 📲✨  \nEste canal de compra queda ahora inactivo.\n\nGracias por tu compra!! 😊\n\nDevuelve JSON con status: \"paid\"\n\n--------------------------------------------------\n--------------------------------------------------\n\n# HERRAMIENTAS\n- \"Set Order Status\": Guarda o Actualiza en estado en Postgres\n- \"Get Order Status\": Recupera el estado actual en Postgres\n\n# FORMATO DE RESPUESTA OBLIGATORIO\n\nSIEMPRE responde únicamente con este JSON:\n\n{\n  \"message\": {\n    \"status\": \"onboarding | auth_to_send_payment_link | pending | paid\",\n    \"content\": \"Texto del mensaje aquí\"\n  }\n}\n\nPROHIBIDO:\n- Texto fuera del JSON\n- Preguntas en estado auth_to_send_payment_link si ya hay afirmación\n- Confirmar dos veces\n- Repetir onboarding\n\n# RECORDATORIOS:\n- Usa las herramientas a disposición para guardar, actualizar y leer los estados correctamente en Postgres"
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
@@ -646,8 +648,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        2272,
-        -960
+        1984,
+        -944
       ],
       "id": "c2bdc81d-721e-4b38-a325-5ac5540722ca",
       "name": "Aggregate1"
@@ -950,8 +952,9 @@
       "parameters": {
         "model": {
           "__rl": true,
+          "value": "gpt-4.1-mini",
           "mode": "list",
-          "value": "gpt-5-mini"
+          "cachedResultName": "gpt-4.1-mini"
         },
         "builtInTools": {},
         "options": {}
@@ -968,111 +971,6 @@
         "openAiApi": {
           "id": "eaR82imfRStkWNpc",
           "name": "OpenAi account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "upsert",
-        "schema": {
-          "__rl": true,
-          "mode": "list",
-          "value": "public"
-        },
-        "table": {
-          "__rl": true,
-          "value": "orders",
-          "mode": "list",
-          "cachedResultName": "orders"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "id": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}",
-            "status": "auth_to_send_payment_link",
-            "customer_phone": "{{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}"
-          },
-          "matchingColumns": [
-            "id"
-          ],
-          "schema": [
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": true,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "customer_phone",
-              "displayName": "customer_phone",
-              "required": true,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
-              "id": "customer_name",
-              "displayName": "customer_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": true
-            },
-            {
-              "id": "customer_email",
-              "displayName": "customer_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": true
-            },
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false
-            },
-            {
-              "id": "payment_finalized_at",
-              "displayName": "payment_finalized_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "dateTime",
-              "canBeUsedToMatch": false,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        3168,
-        -960
-      ],
-      "id": "345694af-fa64-436a-b81c-21baeeafe5b3",
-      "name": "Insert or update rows in a table",
-      "credentials": {
-        "postgres": {
-          "id": "nQ1hEsVJOCSLTyZ1",
-          "name": "Postgres account"
         }
       }
     },
@@ -1421,116 +1319,11 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        2048,
-        -864
+        2160,
+        -944
       ],
       "id": "8d6d4a47-8fcc-4069-a17d-0d176c82819e",
       "name": "Switch1"
-    },
-    {
-      "parameters": {
-        "operation": "upsert",
-        "schema": {
-          "__rl": true,
-          "mode": "list",
-          "value": "public"
-        },
-        "table": {
-          "__rl": true,
-          "value": "orders",
-          "mode": "list",
-          "cachedResultName": "orders"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "id": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}",
-            "status": "pending",
-            "customer_phone": "{{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}"
-          },
-          "matchingColumns": [
-            "id"
-          ],
-          "schema": [
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": true,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "customer_phone",
-              "displayName": "customer_phone",
-              "required": true,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
-              "id": "customer_name",
-              "displayName": "customer_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": true
-            },
-            {
-              "id": "customer_email",
-              "displayName": "customer_email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": true
-            },
-            {
-              "id": "status",
-              "displayName": "status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false
-            },
-            {
-              "id": "payment_finalized_at",
-              "displayName": "payment_finalized_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "dateTime",
-              "canBeUsedToMatch": false,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        2272,
-        -768
-      ],
-      "id": "5d409dcc-2da5-4fd6-a650-eed086d3eca6",
-      "name": "Insert or update rows in a table2",
-      "credentials": {
-        "postgres": {
-          "id": "nQ1hEsVJOCSLTyZ1",
-          "name": "Postgres account"
-        }
-      }
     },
     {
       "parameters": {},
@@ -1640,6 +1433,375 @@
       ],
       "id": "acc23022-d7f2-4ee6-a718-89d34cdd6367",
       "name": "Channel Link"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $('User message').item.json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "positive",
+              "description": "Si el mensaje contiene:  \"si\" \"sí\" \"ok\" \"dale\" \"quiero\" \"me interesa\" \"listo\" \"de una\" \"claro\" \"perfecto\""
+            },
+            {
+              "category": "negative",
+              "description": "Si el mensaje del usuario contiene:  \"no\" \"no gracias\" \"no me interesa\" \"ahora no\" \"después\" \"tal vez no\" \"no quiero\", o similares"
+            }
+          ]
+        },
+        "options": {
+          "enableAutoFixing": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        2560,
+        -752
+      ],
+      "id": "52b540b4-aa22-4b8d-9400-a8e053d8625e",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2496,
+        -544
+      ],
+      "id": "f3a2dcff-e129-420d-8800-d5e4ed95436c",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "eaR82imfRStkWNpc",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "orders",
+          "mode": "list",
+          "cachedResultName": "orders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}",
+            "status": "onboarding",
+            "customer_phone": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "payment_finalized_at",
+              "displayName": "payment_finalized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2976,
+        -608
+      ],
+      "id": "7474a3b0-4e12-420c-a82c-a0228a165173",
+      "name": "Set Status to Onboarding",
+      "credentials": {
+        "postgres": {
+          "id": "nQ1hEsVJOCSLTyZ1",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "orders",
+          "mode": "list",
+          "cachedResultName": "orders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}",
+            "status": "pending",
+            "customer_phone": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "payment_finalized_at",
+              "displayName": "payment_finalized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2976,
+        -768
+      ],
+      "id": "5d409dcc-2da5-4fd6-a650-eed086d3eca6",
+      "name": "Set Status to Pending",
+      "credentials": {
+        "postgres": {
+          "id": "nQ1hEsVJOCSLTyZ1",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "orders",
+          "mode": "list",
+          "cachedResultName": "orders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}",
+            "status": "auth_to_send_payment_link",
+            "customer_phone": "={{$('User message').item.json.chat_id.replace(\"@s.whatsapp.net\", \"\")}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "payment_finalized_at",
+              "displayName": "payment_finalized_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3168,
+        -960
+      ],
+      "id": "345694af-fa64-436a-b81c-21baeeafe5b3",
+      "name": "Set Status to Auth to Send Link",
+      "credentials": {
+        "postgres": {
+          "id": "nQ1hEsVJOCSLTyZ1",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "pinData": {
@@ -2091,7 +2253,7 @@
       "main": [
         [
           {
-            "node": "Switch1",
+            "node": "Aggregate1",
             "type": "main",
             "index": 0
           }
@@ -2142,7 +2304,7 @@
       "main": [
         [
           {
-            "node": "Send image",
+            "node": "Switch1",
             "type": "main",
             "index": 0
           }
@@ -2175,7 +2337,7 @@
       "main": [
         [
           {
-            "node": "Insert or update rows in a table",
+            "node": "Set Status to Auth to Send Link",
             "type": "main",
             "index": 0
           }
@@ -2345,14 +2507,14 @@
       "main": [
         [
           {
-            "node": "Aggregate1",
+            "node": "Send image",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Insert or update rows in a table2",
+            "node": "Text Classifier",
             "type": "main",
             "index": 0
           }
@@ -2413,6 +2575,35 @@
           }
         ]
       ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Set Status to Pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Status to Onboarding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -2421,7 +2612,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "8237022b-71d5-47fc-bce8-503b0e804038",
+  "versionId": "0720a0c5-0cc3-4b99-94e3-15f43454bab8",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "477c07c3b197c01d45fc4f359fe8b6634f8c51a5c856e9ed5b49fcbc08d0d88e"
